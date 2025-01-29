@@ -1,33 +1,71 @@
 import React from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
+import * as Location from 'expo-location';
 
-const MapComponent = () => {
+interface RouteCoordinate {
+  latitude: number;
+  longitude: number;
+}
+
+interface MapComponentProps {
+  location: Location.LocationObject | null;
+  route: RouteCoordinate[];
+}
+
+const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
+  const initialRegion = {
+    latitude: location?.coords.latitude || -23.550520,  // Coordenada padrão (São Paulo)
+    longitude: location?.coords.longitude || -46.633308, // Coordenada padrão (São Paulo)
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
+  };
+
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        provider="google" // Usa Google Maps como provedor
-        initialRegion={{
-          latitude: 37.78825,
-          longitude: -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
+        provider="google"
+        initialRegion={initialRegion}
+        region={location ? {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        } : undefined}
       >
-        <Marker
-          coordinate={{ latitude: 37.78825, longitude: -122.4324 }}
-          title="Localização"
-          description="Descrição do local"
-        />
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            }}
+            title="Posição Atual"
+          />
+        )}
+        
+        {route.length > 0 && (
+          <Polyline
+            coordinates={route}
+            strokeColor="#FF4500" // Cor laranja
+            strokeWidth={3}
+          />
+        )}
       </MapView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
+  container: {
+    flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: 300, // Altura fixa para o mapa
+  },
+  map: {
+    flex: 1,
+  },
 });
 
 export default MapComponent;

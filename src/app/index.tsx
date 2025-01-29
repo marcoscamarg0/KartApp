@@ -143,16 +143,18 @@ const RaceDashboard = () => {
         </View>
         <RankingList runners={runners} />
 
-        <MapComponent location={location} route={route} />
+      <MapComponent 
+       location={location as Location.LocationObject | null}
+       route={route as RouteCoordinate[]}/>
 
-        <View style={tw`items-center`}>
+        <View style={tw`items-center mt-4`}>
           <Image
             source={require('../assets/logo.png')}
-            style={tw`w-30 h-30`}
+            style={[tw``, { width: 120, height: 120 }]} 
             resizeMode="contain"
           />
         </View>
-      </View>
+      </View> 
     </View>
   );
 };
