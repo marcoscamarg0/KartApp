@@ -36,6 +36,7 @@ const RaceDashboard = () => {
   const [route, setRoute] = useState<RouteCoordinate[]>([]);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const lapTimeInterval = useRef<number | null>(null);
+  const startTime = useRef<number | null>(null);
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // Raio da Terra em km
@@ -50,9 +51,9 @@ const RaceDashboard = () => {
   };
 
   const updateLapTime = (): void => {
-    if (location) {
-      const now = new Date();
-      const lapTime = now.getTime() - location.timestamp;
+    if (startTime.current) {
+      const now = new Date().getTime();
+      const lapTime = now - startTime.current;
       const minutes = Math.floor(lapTime / 60000);
       const seconds = ((lapTime % 60000) / 1000).toFixed(0);
       setCurrentLapTime(`${minutes}:${seconds.padStart(2, '0')}`);
@@ -60,12 +61,16 @@ const RaceDashboard = () => {
   };
 
   useEffect(() => {
-    (async () => {
+    let isMounted = true;
+
+    const startTracking = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permissão negada', 'É necessário permitir o acesso à localização.');
         return;
       }
+
+      startTime.current = new Date().getTime();
 
       locationSubscription.current = await Location.watchPositionAsync(
         {
@@ -74,6 +79,8 @@ const RaceDashboard = () => {
           distanceInterval: 1,
         },
         (newLocation: Location.LocationObject) => {
+          if (!isMounted) return;
+
           const speedKmh = newLocation.coords.speed
             ? (newLocation.coords.speed * 3.6).toFixed(1)
             : '0';
@@ -95,24 +102,29 @@ const RaceDashboard = () => {
                 longitude: newLocation.coords.longitude,
               }
             ]);
-            updateLapTime();
           }
 
           setLocation(newLocation);
         }
       );
 
-      lapTimeInterval.current = setInterval(updateLapTime, 1000);
+    lapTimeInterval = setInterval(updateLapTime, 1000);
+    };
 
-      return () => {
-        if (lapTimeInterval.current !== null) {
-          clearInterval(lapTimeInterval.current);
-        }
-        if (locationSubscription.current) {
-          locationSubscription.current.remove();
-        }
-      };
-    })();
+    startTracking();
+
+    return () => {
+      isMounted = false;
+
+      if (lapTimeInterval.current !== null) {
+        clearInterval(lapTimeInterval.current);
+        lapTimeInterval.current = null;
+      }
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+    };
   }, [location]);
 
   return (
@@ -143,9 +155,10 @@ const RaceDashboard = () => {
         </View>
         <RankingList runners={runners} />
 
-      <MapComponent 
-       location={location as Location.LocationObject | null}
-       route={route as RouteCoordinate[]}/>
+        <MapComponent 
+          location={location as Location.LocationObject | null}
+          route={route as RouteCoordinate[]}
+        />
 
         <View style={tw`items-center mt-4`}>
           <Image
