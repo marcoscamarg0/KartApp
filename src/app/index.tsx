@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StatusBar, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import tw from 'twrnc';
 import * as Location from 'expo-location';
 import RankingList from './RankingList';
 import MapComponent from './MapComponent';
-
+import Chronometer from './cronometro'; 
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
@@ -35,11 +35,10 @@ const RaceDashboard = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [route, setRoute] = useState<RouteCoordinate[]>([]);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
-  const lapTimeInterval = useRef<number | null>(null);
-  const startTime = useRef<number | null>(null);
+  const [isTracking, setIsTracking] = useState(false); // Novo estado para controlar o tracking
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Raio da Terra em km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -47,85 +46,63 @@ const RaceDashboard = () => {
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distância em km
+    return R * c;
   };
 
-  const updateLapTime = (): void => {
-    if (startTime.current) {
-      const now = new Date().getTime();
-      const lapTime = now - startTime.current;
-      const minutes = Math.floor(lapTime / 60000);
-      const seconds = ((lapTime % 60000) / 1000).toFixed(0);
-      setCurrentLapTime(`${minutes}:${seconds.padStart(2, '0')}`);
+  const startTracking = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão negada', 'É necessário permitir o acesso à localização.');
+      return;
     }
+
+    setIsTracking(true);
+
+    locationSubscription.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 1000,
+        distanceInterval: 1,
+      },
+      (newLocation: Location.LocationObject) => {
+        const speedKmh = newLocation.coords.speed
+          ? (newLocation.coords.speed * 3.6).toFixed(1)
+          : '0';
+        setCurrentSpeed(parseFloat(speedKmh));
+
+        if (location) {
+          const distance = calculateDistance(
+            location.coords.latitude,
+            location.coords.longitude,
+            newLocation.coords.latitude,
+            newLocation.coords.longitude
+          );
+
+          setTotalDistance(prevDistance => prevDistance + distance);
+          setRoute(prevRoute => [
+            ...prevRoute,
+            {
+              latitude: newLocation.coords.latitude,
+              longitude: newLocation.coords.longitude,
+            }
+          ]);
+        }
+
+        setLocation(newLocation);
+      }
+    );
   };
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const startTracking = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'É necessário permitir o acesso à localização.');
-        return;
-      }
-
-      startTime.current = new Date().getTime();
-
-      locationSubscription.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 1000,
-          distanceInterval: 1,
-        },
-        (newLocation: Location.LocationObject) => {
-          if (!isMounted) return;
-
-          const speedKmh = newLocation.coords.speed
-            ? (newLocation.coords.speed * 3.6).toFixed(1)
-            : '0';
-          setCurrentSpeed(parseFloat(speedKmh));
-
-          if (location) {
-            const distance = calculateDistance(
-              location.coords.latitude,
-              location.coords.longitude,
-              newLocation.coords.latitude,
-              newLocation.coords.longitude
-            );
-
-            setTotalDistance(prevDistance => prevDistance + distance);
-            setRoute(prevRoute => [
-              ...prevRoute,
-              {
-                latitude: newLocation.coords.latitude,
-                longitude: newLocation.coords.longitude,
-              }
-            ]);
-          }
-
-          setLocation(newLocation);
-        }
-      );
-
-    lapTimeInterval = setInterval(updateLapTime, 1000);
-    };
-
+  React.useEffect(() => {
     startTracking();
 
     return () => {
-      isMounted = false;
-
-      if (lapTimeInterval.current !== null) {
-        clearInterval(lapTimeInterval.current);
-        lapTimeInterval.current = null;
-      }
       if (locationSubscription.current) {
         locationSubscription.current.remove();
         locationSubscription.current = null;
       }
     };
-  }, [location]);
+  }, []);
 
   return (
     <View style={tw`flex-1 bg-black items-center justify-center p-4`}>
@@ -148,16 +125,19 @@ const RaceDashboard = () => {
             <Text style={tw`text-orange-500 text-lg`}>DISTÂNCIA</Text>
             <Text style={tw`text-white text-3xl font-bold`}>{totalDistance.toFixed(2)} KM</Text>
           </View>
-          <View style={tw`bg-gray-800 p-4 rounded-lg w-[48%]`}>
-            <Text style={tw`text-orange-500 text-lg`}>VOLTA ATUAL</Text>
-            <Text style={tw`text-white text-3xl font-bold`}>{currentLapTime}</Text>
+          <View style={tw`w-[48%]`}>
+            <Chronometer 
+              isActive={isTracking}
+              onTimeUpdate={setCurrentLapTime}
+            />
           </View>
         </View>
+        
         <RankingList runners={runners} />
 
         <MapComponent 
-          location={location as Location.LocationObject | null}
-          route={route as RouteCoordinate[]}
+          location={location}
+          route={route}
         />
 
         <View style={tw`items-center mt-4`}>
