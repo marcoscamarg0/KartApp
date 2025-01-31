@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './componentes/login-screen';
-import RaceDashboard from './screens/index';
+import RaceDashboard from './index';
 
 export type RootStackParamList = {
   Login: undefined;
