@@ -4,7 +4,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './componentes/login-screen';
 import RaceDashboard from './screens/index';
 
-
 export type RootStackParamList = {
   Login: undefined;
   RaceDashboard: undefined;
@@ -15,10 +14,10 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{
-          headerShown: false
+          headerShown: false,
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
