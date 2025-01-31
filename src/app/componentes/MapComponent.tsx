@@ -3,6 +3,8 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
 import * as Location from 'expo-location';
 
+
+
 interface RouteCoordinate {
   latitude: number;
   longitude: number;
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    height: 300, // Altura fixa para o mapa
+    height: 300, 
   },
   map: {
     flex: 1,
