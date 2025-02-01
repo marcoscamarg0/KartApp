@@ -64,7 +64,7 @@ race-tracking-app/
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/marcoscamarg0/KartApp2--funcional--master
+git clone [url-do-seu-repositorio]
 cd race-tracking-app
 ```
 

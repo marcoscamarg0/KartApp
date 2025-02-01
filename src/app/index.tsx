@@ -3,10 +3,9 @@ import { View, Text, TouchableOpacity, Dimensions, StatusBar, Image, Alert } fro
 import { FontAwesome } from '@expo/vector-icons';
 import tw from 'twrnc';
 import * as Location from 'expo-location';
-import RankingList from './componentes/RankingList';
-import MapComponent from './componentes/MapComponent';
-import Chronometer from './componentes/cronometro'; 
-
+import RankingList from './RankingList';
+import MapComponent from './MapComponent';
+import Chronometer from './cronometro'; 
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
@@ -143,7 +142,7 @@ const RaceDashboard = () => {
 
         <View style={tw`items-center mt-4`}>
           <Image
-            source={require('../assets/images/google-icon.png')}
+            source={require('../assets/logo.png')}
             style={[tw``, { width: 120, height: 120 }]} 
             resizeMode="contain"
           />
