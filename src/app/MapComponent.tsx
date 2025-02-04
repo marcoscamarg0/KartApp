@@ -1,7 +1,9 @@
-import React from 'react';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
+import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
+
+MapboxGL.setAccessToken("pk.eyJ1IjoibmlnaHRhcnR6IiwiYSI6ImNtNnFyNmEwYzFpemoyanE4NWVkanM2NHIifQ.l5DkMGkgR3bVq39u9tCVYw");
 
 interface RouteCoordinate {
   latitude: number;
@@ -14,58 +16,76 @@ interface MapComponentProps {
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
-  const initialRegion = {
-    latitude: location?.coords.latitude || -23.550520,  // Coordenada padrão (São Paulo)
-    longitude: location?.coords.longitude || -46.633308, // Coordenada padrão (São Paulo)
-    latitudeDelta: 0.005,
-    longitudeDelta: 0.005,
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permissão de localização negada');
+      }
+    })();
+  }, []);
+
+  const initialCamera = {
+    centerCoordinate: [
+      location?.coords.longitude ?? -46.633308,
+      location?.coords.latitude ?? -23.550520
+    ],
+    zoomLevel: 15,
+    pitch: 45,
+    heading: 0
   };
 
   return (
     <View style={styles.container}>
-      <MapView
+      <MapboxGL.MapView
+        styleURL={"mapbox://styles/mapbox/streets-v11"}
         style={styles.map}
-        provider="google"
-        initialRegion={initialRegion}
-        region={location ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        } : undefined}
+        pitchEnabled={true}
+        rotateEnabled={true}
       >
-        {location && (
-          <Marker
-            coordinate={{
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }}
-            title="Posição Atual"
-          />
-        )}
-        
-        {route.length > 0 && (
-          <Polyline
-            coordinates={route}
-            strokeColor="#FF4500" // Cor laranja
-            strokeWidth={3}
-          />
-        )}
-      </MapView>
-    </View>
-  );
-};
+        <MapboxGL.Camera
+          defaultSettings={initialCamera}
+      centerCoordinate={location ? [
+        location.coords.longitude,
+        location.coords.latitude
+      ] : initialCamera.centerCoordinate}
+      followUserLocation={true}
+      followZoomLevel={15}
+      followPitch={45}
+    />
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    height: 300, // Altura fixa para o mapa
-  },
-  map: {
-    flex: 1,
-  },
-});
+    <MapboxGL.UserLocation
+      visible={true}
+      showsUserHeadingIndicator={true}
+    />
+
+    {route.length > 0 && (
+      <MapboxGL.ShapeSource
+        id="routeSource"
+        shape={{
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: route.map(coord => [coord.longitude, coord.latitude])
+          }
+        }}
+      >
+        <MapboxGL.LineLayer
+          id="routeLine"
+          style={{
+            lineColor: '#FF4500',
+            lineWidth: 4,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }}
+        />
+      </MapboxGL.ShapeSource>
+    )}
+  </MapboxGL.MapView>
+</View>
+); };
+
+const styles = StyleSheet.create({ container: { flex: 1, borderRadius: 8, overflow: 'hidden', height: 300, }, map: { flex: 1, }, });
 
 export default MapComponent;
