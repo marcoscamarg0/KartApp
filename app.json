@@ -4,26 +4,23 @@
     "slug": "KartApp2",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "icon": "./src/assets/images/logo.png",
+    "scheme": "kartapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F4A460"
       },
       "package": "com.kartapp"
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
+<<<<<<< HEAD
+      "expo-router"
+=======
       "expo-router",
       [
         "expo-splash-screen",
@@ -34,18 +31,10 @@
           "backgroundColor": "#ffffff"
         }
       ]
+>>>>>>> parent of cc0558c (p)
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "875b4a06-39f4-4bdc-a5be-87de2a9249ca"
-      }
-    },
-    "owner": "nightartz"
+    }
   }
 }
