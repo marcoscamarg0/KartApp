@@ -1,5 +1,5 @@
 import React from 'react';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
 import * as Location from 'expo-location';
 
@@ -25,7 +25,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        provider="google"
+        provider={PROVIDER_DEFAULT}  // Usando OpenStreetMap como provedor padrão
         initialRegion={initialRegion}
         region={location ? {
           latitude: location.coords.latitude,
@@ -33,6 +33,10 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         } : undefined}
+        mapType="standard"
+        rotateEnabled={false}
+        zoomEnabled={true}
+        scrollEnabled={true}
       >
         {location && (
           <Marker
@@ -47,7 +51,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
         {route.length > 0 && (
           <Polyline
             coordinates={route}
-            strokeColor="#FF4500" // Cor laranja
+            strokeColor="#FF4500"
             strokeWidth={3}
           />
         )}
@@ -61,7 +65,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    height: 300, // Altura fixa para o mapa
+    height: 300,
   },
   map: {
     flex: 1,
