@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import RankingList from './RankingList';
 import MapComponent from './MapComponent';
 import Chronometer from './cronometro'; 
+
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
@@ -22,8 +23,8 @@ interface RouteCoordinate {
 const RaceDashboard = () => {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [totalDistance, setTotalDistance] = useState<number>(0);
-  const [currentLapTime, setCurrentLapTime] = useState<string>('0:00');
-  const [runners, setRunners] = useState<Runner[]>([
+  const [currentLapTime, setCurrentLapTime] = useState<string>('');
+  const [runners] = useState<Runner[]>([
     { id: 1, name: 'CORREDOR 1', time: "" },
     { id: 2, name: 'CORREDOR 2', time: "" },
     { id: 3, name: 'CORREDOR 3', time: "" },
@@ -35,7 +36,7 @@ const RaceDashboard = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [route, setRoute] = useState<RouteCoordinate[]>([]);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
-  const [isTracking, setIsTracking] = useState(false); // Novo estado para controlar o tracking
+  const [isTracking, setIsTracking] = useState(false);
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371;
