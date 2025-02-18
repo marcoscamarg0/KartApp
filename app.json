@@ -2,6 +2,7 @@
   "expo": {
     "name": "KartApp2",
     "slug": "KartApp2",
+    "scheme": "KartApp2",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -34,7 +35,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que o KartApp2 use sua localização."
+          "locationAlwaysAndWhenInUsePermission": "Permitir que o KartApp use sua localização."
         }
       ]
     ],
