@@ -4,7 +4,7 @@
     "slug": "KartApp2",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon .png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -26,7 +26,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": null
+          "apiKey": "AIzaSyBWQ3qpenJdXC-hru78gs_leaUpaStxv3I"
         }
       }
     },
@@ -34,7 +34,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que o KartApp2 use sua localização."
+          "locationAlwaysAndWhenInUsePermission": "Permitir que o KartApp use sua localização."
         }
       ]
     ],
