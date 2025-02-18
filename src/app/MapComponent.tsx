@@ -15,8 +15,8 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
   const initialRegion = {
-    latitude: location?.coords.latitude ?? -23.550520,
-    longitude: location?.coords.longitude ?? -46.633308,
+    latitude: location?.coords.latitude ?? -15.7801,
+    longitude: location?.coords.longitude ?? -47.9292,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
