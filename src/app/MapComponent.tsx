@@ -2,6 +2,7 @@ import React from 'react';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
 import * as Location from 'expo-location';
+import carIcon from '../assets/car-icon.png'; 
 
 interface RouteCoordinate {
   latitude: number;
@@ -17,8 +18,8 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking, speed }) => {
   const initialRegion = {
-    latitude: location?.coords.latitude || -23.550520,
-    longitude: location?.coords.longitude || -46.633308,
+    latitude: location?.coords.latitude ?? -23.550520,
+    longitude: location?.coords.longitude ?? -46.633308,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   };
@@ -47,6 +48,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking
               longitude: location.coords.longitude,
             }}
             title={`Velocidade: ${speed.toFixed(1)} KM/H`}
+            icon={carIcon} 
           />
         )}
         
