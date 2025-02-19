@@ -6,7 +6,6 @@ import * as Location from 'expo-location';
 import RankingList from './RankingList';
 import MapComponent from './MapComponent';
 import Chronometer from './cronometro'; 
-
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
@@ -23,8 +22,13 @@ interface RouteCoordinate {
 const RaceDashboard = () => {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [totalDistance, setTotalDistance] = useState<number>(0);
-  const [currentLapTime, setCurrentLapTime] = useState<string>('');
-  const [runners] = useState<Runner[]>([
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [route, setRoute] = useState<RouteCoordinate[]>([]);
+  const [isTracking, setIsTracking] = useState(false);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+
+  // Initialize runners with a function to update their times
+  const [runners, setRunners] = useState<Runner[]>([
     { id: 1, name: 'CORREDOR 1', time: "" },
     { id: 2, name: 'CORREDOR 2', time: "" },
     { id: 3, name: 'CORREDOR 3', time: "" },
@@ -33,10 +37,14 @@ const RaceDashboard = () => {
     { id: 6, name: 'CORREDOR 6', time: "" },
   ]);
 
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [route, setRoute] = useState<RouteCoordinate[]>([]);
-  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
-  const [isTracking, setIsTracking] = useState(false);
+  const updateRunnerTime = (time: string) => {
+    // Update the first runner's time as an example
+    setRunners(prevRunners => {
+      const newRunners = [...prevRunners];
+      newRunners[0] = { ...newRunners[0], time };
+      return newRunners;
+    });
+  };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371;
@@ -112,39 +120,56 @@ const RaceDashboard = () => {
         tw`w-full bg-gray-900 rounded-lg p-4`,
         { width: width * 1, height: height * 1 }
       ]}>
-        <View style={tw`flex-row justify-between items-center mb-4`}>
+        {/* Header with back button */}
+        <View style={tw`flex-row justify-between items-center mb-2`}>
           <TouchableOpacity>
             <FontAwesome name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
-          <View style={tw`items-center`}>
-            <Text style={tw`text-orange-500 text-3xl font-bold`}>{currentSpeed} KM/H</Text>
-          </View>
         </View>
 
-        <View style={tw`flex-row justify-between mb-4`}>
-          <View style={tw`bg-gray-800 p-4 rounded-lg w-[48%]`}>
-            <Text style={tw`text-orange-500 text-lg`}>DISTÂNCIA</Text>
-            <Text style={tw`text-white text-3xl font-bold`}>{totalDistance.toFixed(2)} KM</Text>
+        {/* Stats Row */}
+        <View style={tw`flex-row justify-between mb-2`}>
+          {/* Current Speed */}
+          <View style={tw`bg-gray-800 p-2 rounded-lg w-[32%]`}>
+            <Text style={tw`text-orange-500 text-sm`}>VELOCIDADE</Text>
+            <Text style={tw`text-white text-xl font-bold`}>{currentSpeed} KM/H</Text>
           </View>
-          <View style={tw`w-[48%]`}>
+
+          {/* Distance */}
+          <View style={tw`bg-gray-800 p-2 rounded-lg w-[32%]`}>
+            <Text style={tw`text-orange-500 text-sm`}>DISTÂNCIA</Text>
+            <Text style={tw`text-white text-xl font-bold`}>{totalDistance.toFixed(2)} KM</Text>
+          </View>
+
+          {/* Current Time */}
+          <View style={tw`w-[32%]`}>
             <Chronometer 
               isActive={isTracking}
-              onTimeUpdate={setCurrentLapTime}
+              onTimeUpdate={updateRunnerTime}
             />
           </View>
         </View>
         
-        <RankingList runners={runners} />
+        {/* Map Section */}
+        <View style={tw`flex-1 mb-2`}>
+          <MapComponent 
+            location={location}
+            route={route}
+            isTracking={isTracking}
+            speed={currentSpeed}
+          />
+        </View>
 
-        <MapComponent 
-          location={location}
-          route={route}
-        />
+        {/* Ranking Section */}
+        <View style={tw`h-32`}>
+          <RankingList runners={runners} />
+        </View>
 
-        <View style={tw`items-center mt-4`}>
+        {/* Logo Section */}
+        <View style={tw`items-center mt-2`}>
           <Image
             source={require('../assets/logo.png')}
-            style={[tw``, { width: 120, height: 120 }]} 
+            style={[tw``, { width: 80, height: 80 }]} 
             resizeMode="contain"
           />
         </View>
