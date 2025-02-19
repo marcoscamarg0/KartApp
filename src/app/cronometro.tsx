@@ -28,7 +28,7 @@ const Chronometer: React.FC<ChronometerProps> = ({
       setIsRunning(true);
       startTimeRef.current = Date.now() - lastTimeRef.current;
       intervalRef.current = setInterval(() => {
-        const currentTime = Date.now() - (startTimeRef.current || 0);
+        const currentTime = Date.now() - (startTimeRef.current ?? 0);
         setTime(currentTime);
         lastTimeRef.current = currentTime;
         if (onTimeUpdate) {
