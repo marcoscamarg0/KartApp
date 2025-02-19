@@ -26,8 +26,8 @@ const RaceDashboard = () => {
   const [route, setRoute] = useState<RouteCoordinate[]>([]);
   const [isTracking, setIsTracking] = useState(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const lastLocation = useRef<Location.LocationObject | null>(null);
 
-  // Initialize runners with a function to update their times
   const [runners, setRunners] = useState<Runner[]>([
     { id: 1, name: 'CORREDOR 1', time: "" },
     { id: 2, name: 'CORREDOR 2', time: "" },
@@ -38,7 +38,6 @@ const RaceDashboard = () => {
   ]);
 
   const updateRunnerTime = (time: string) => {
-    // Update the first runner's time as an example
     setRunners(prevRunners => {
       const newRunners = [...prevRunners];
       newRunners[0] = { ...newRunners[0], time };
@@ -47,15 +46,19 @@ const RaceDashboard = () => {
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const R = 6371; // Raio da Terra em km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+  };
+
+  const toRad = (value: number): number => {
+    return value * Math.PI / 180;
   };
 
   const startTracking = async () => {
@@ -69,34 +72,46 @@ const RaceDashboard = () => {
 
     locationSubscription.current = await Location.watchPositionAsync(
       {
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
         timeInterval: 1000,
         distanceInterval: 1,
       },
       (newLocation: Location.LocationObject) => {
+        // Atualiza velocidade
         const speedKmh = newLocation.coords.speed
-          ? (newLocation.coords.speed * 3.6).toFixed(1)
-          : '0';
-        setCurrentSpeed(parseFloat(speedKmh));
+          ? (newLocation.coords.speed * 3.6)
+          : 0;
+        setCurrentSpeed(Number(speedKmh.toFixed(1)));
 
-        if (location) {
+        // Atualiza distância apenas se houver uma localização anterior
+        if (lastLocation.current) {
           const distance = calculateDistance(
-            location.coords.latitude,
-            location.coords.longitude,
+            lastLocation.current.coords.latitude,
+            lastLocation.current.coords.longitude,
             newLocation.coords.latitude,
             newLocation.coords.longitude
           );
 
-          setTotalDistance(prevDistance => prevDistance + distance);
-          setRoute(prevRoute => [
-            ...prevRoute,
-            {
-              latitude: newLocation.coords.latitude,
-              longitude: newLocation.coords.longitude,
-            }
-          ]);
+          // Só adiciona a distância se for maior que 0.001 km (1 metro) para evitar ruído
+          if (distance > 0.001) {
+            setTotalDistance(prevDistance => {
+              const newDistance = prevDistance + distance;
+              return Number(newDistance.toFixed(3));
+            });
+          }
         }
 
+        // Atualiza a rota
+        setRoute(prevRoute => [
+          ...prevRoute,
+          {
+            latitude: newLocation.coords.latitude,
+            longitude: newLocation.coords.longitude,
+          }
+        ]);
+
+        // Atualiza a última localização
+        lastLocation.current = newLocation;
         setLocation(newLocation);
       }
     );
@@ -110,6 +125,7 @@ const RaceDashboard = () => {
         locationSubscription.current.remove();
         locationSubscription.current = null;
       }
+      lastLocation.current = null;
     };
   }, []);
 
