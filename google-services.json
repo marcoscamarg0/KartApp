@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "289578834548",
+    "project_id": "kartapp-449520",
+    "storage_bucket": "kartapp-449520.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289578834548:android:9f180fa11c03ba19e88f21",
+        "android_client_info": {
+          "package_name": "com.kartapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "289578834548-sgcl77sb1f5a54itfb7b4dv6n1hcqe1v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDK42qfHCZcGq_F2OjmgkazCTXI6oDrqnM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "289578834548-sgcl77sb1f5a54itfb7b4dv6n1hcqe1v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

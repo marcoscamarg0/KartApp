@@ -3,9 +3,9 @@ import { View, Text, TouchableOpacity, Dimensions, StatusBar, Image, Alert } fro
 import { FontAwesome } from '@expo/vector-icons';
 import tw from 'twrnc';
 import * as Location from 'expo-location';
-import RankingList from './RankingList';
-import MapComponent from './MapComponent';
-import Chronometer from './cronometro'; 
+import RankingList from '../funçoes/RankingList';
+import MapComponent from '../funçoes/MapComponent';
+import Chronometer from '../funçoes/cronometro'; 
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
