@@ -1,8 +1,7 @@
 import React from 'react';
-import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
-import carIcon from '../assets/car-icon.png'; 
 
 interface RouteCoordinate {
   latitude: number;
@@ -12,34 +11,24 @@ interface RouteCoordinate {
 interface MapComponentProps {
   location: Location.LocationObject | null;
   route: RouteCoordinate[];
-  isTracking: boolean;
-  speed: number;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking, speed }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ location, route }) => {
   const initialRegion = {
     latitude: location?.coords.latitude ?? -23.550520,
     longitude: location?.coords.longitude ?? -46.633308,
-    latitudeDelta: 0.005,
-    longitudeDelta: 0.005,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
   };
 
   return (
     <View style={styles.container}>
       <MapView
-        style={styles.map}
         provider={PROVIDER_DEFAULT}
+        style={styles.map}
         initialRegion={initialRegion}
-        region={location ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        } : undefined}
-        mapType="standard"
-        rotateEnabled={false}
-        zoomEnabled={true}
-        scrollEnabled={true}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
       >
         {location && (
           <Marker
@@ -47,11 +36,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
             }}
-            title={`Velocidade: ${speed.toFixed(1)} KM/H`}
-            icon={carIcon} 
-          />
+            title="Posição Atual"
+          >
+            <View style={styles.annotationContainer}>
+              <View style={styles.annotationFill} />
+            </View>
+          </Marker>
         )}
-        
+
         {route.length > 0 && (
           <Polyline
             coordinates={route}
@@ -69,9 +61,25 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 8,
     overflow: 'hidden',
+    height: 300,
   },
   map: {
     flex: 1,
+  },
+  annotationContainer: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 15,
+  },
+  annotationFill: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FF4500',
+    transform: [{ scale: 0.8 }],
   },
 });
 

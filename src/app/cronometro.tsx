@@ -99,12 +99,12 @@ const Chronometer: React.FC<ChronometerProps> = ({
   return (
     <TouchableOpacity 
       onPress={handlePress}
-      style={tw`bg-gray-800 p-2 rounded-lg`}
+      style={tw`bg-gray-800 p-4 rounded-lg`}
     >
-      <Text style={tw`text-orange-500 text-sm`}>
+      <Text style={tw`text-orange-500 text-lg`}>
         VOLTA ATUAL {isRunning ? '▶' : '⏸'}
       </Text>
-      <Text style={tw`text-white text-xl font-bold`}>
+      <Text style={tw`text-white text-3xl font-bold`}>
         {formatTime(time)}
       </Text>
     </TouchableOpacity>
