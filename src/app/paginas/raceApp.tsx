@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StatusBar, Image, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -26,6 +26,7 @@ const RaceDashboard = () => {
   const [route, setRoute] = useState<RouteCoordinate[]>([]);
   const [isTracking, setIsTracking] = useState(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const lastLocationRef = useRef<Location.LocationObject | null>(null);
 
   // Initialize runners with a function to update their times
   const [runners, setRunners] = useState<Runner[]>([
@@ -47,7 +48,7 @@ const RaceDashboard = () => {
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371;
+    const R = 6371; // Raio da Terra em km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -55,7 +56,7 @@ const RaceDashboard = () => {
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    return R * c; // Distância em km
   };
 
   const startTracking = async () => {
@@ -67,42 +68,56 @@ const RaceDashboard = () => {
 
     setIsTracking(true);
 
+    // Certifique-se de parar qualquer assinatura anterior
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+    }
+
     locationSubscription.current = await Location.watchPositionAsync(
       {
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
         timeInterval: 1000,
         distanceInterval: 1,
       },
       (newLocation: Location.LocationObject) => {
+        // Calcular velocidade em km/h
         const speedKmh = newLocation.coords.speed
           ? (newLocation.coords.speed * 3.6).toFixed(1)
           : '0';
         setCurrentSpeed(parseFloat(speedKmh));
 
-        if (location) {
+        // Atualizar rota
+        setRoute(prevRoute => [
+          ...prevRoute,
+          {
+            latitude: newLocation.coords.latitude,
+            longitude: newLocation.coords.longitude,
+          }
+        ]);
+
+        // Calcular distância apenas se houver uma localização anterior
+        if (lastLocationRef.current) {
           const distance = calculateDistance(
-            location.coords.latitude,
-            location.coords.longitude,
+            lastLocationRef.current.coords.latitude,
+            lastLocationRef.current.coords.longitude,
             newLocation.coords.latitude,
             newLocation.coords.longitude
           );
-
-          setTotalDistance(prevDistance => prevDistance + distance);
-          setRoute(prevRoute => [
-            ...prevRoute,
-            {
-              latitude: newLocation.coords.latitude,
-              longitude: newLocation.coords.longitude,
-            }
-          ]);
+          
+          // Filtragem para evitar pequenas flutuações causadas por imprecisões do GPS
+          if (distance > 0.001) { // Ignorar distâncias menores que 1 metro
+            setTotalDistance(prevDistance => prevDistance + distance);
+          }
         }
 
+        // Atualizar a localização atual e a referência à última localização
         setLocation(newLocation);
+        lastLocationRef.current = newLocation;
       }
     );
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     startTracking();
 
     return () => {
@@ -111,7 +126,7 @@ const RaceDashboard = () => {
         locationSubscription.current = null;
       }
     };
-  }, []);
+  }, []); // Remova as dependências para evitar recriar o listener
 
   return (
     <View style={tw`flex-1 bg-black items-center justify-center p-4`}>
