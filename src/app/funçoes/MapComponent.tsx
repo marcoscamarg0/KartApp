@@ -12,13 +12,12 @@ interface MapComponentProps {
   location: Location.LocationObject | null;
   route: RouteCoordinate[];
   isTracking: boolean;
-  speed: number;
-}
+  speed: number;}
 
 const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking, speed }) => {
   const initialRegion = {
-    latitude: location?.coords.latitude || -23.550520,
-    longitude: location?.coords.longitude || -46.633308,
+    latitude: location?.coords.latitude ?? -23.550520,
+    longitude: location?.coords.longitude ?? -46.633308,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   };
@@ -69,7 +68,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   map: {
-    flex: 1,
+    flex: 0.9,
   },
 });
 
