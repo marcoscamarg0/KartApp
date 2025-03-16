@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import * as Animatable from 'react-native-animatable'; // Import correto
 import { router } from 'expo-router';
 import * as Google from 'expo-auth-session/providers/google';
 import { useAuth } from '../funçoes/AuthContext';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
-  
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: 'SEU_CLIENT_ID',
     androidClientId: 'SEU_ANDROID_CLIENT_ID',
@@ -33,13 +34,23 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>KartApp</Text>
-      <Pressable 
+  
+      <Animatable.Text
+        animation="zoomIn" // Nome da animação
+        duration={3000} // Duração da animação em milissegundos
+        style={styles.title}
+      >
+        KART APP
+      </Animatable.Text>
+
+      <Pressable
         style={styles.googleButton}
         onPress={() => promptAsync()}
         disabled={!request}
       >
-        <Text style={styles.buttonText}>Entrar com Google</Text>
+        <Animatable.Text animation="fadeIn" duration={800} style={styles.buttonText}>
+          Entrar com Google
+        </Animatable.Text>
       </Pressable>
     </View>
   );
@@ -51,22 +62,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#202020',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 40,
+    color: '#ffbc2b', 
   },
   googleButton: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#FF6F20', 
     padding: 15,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  }
+  },
 });
