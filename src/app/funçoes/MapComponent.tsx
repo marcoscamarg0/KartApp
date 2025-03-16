@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   map: {
-    flex: 0.9,
+    flex: 1,
   },
 });
 

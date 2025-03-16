@@ -16,7 +16,7 @@ const RankingList: React.FC<RankingListProps> = ({ runners }) => {
   return (
     <View style={tw`bg-gray-800 p-4 rounded-lg mb-4`}>
       <Text style={tw`text-orange-500 text-lg mb-2`}>CLASSIFICAÇÃO</Text>
-      <ScrollView style={tw`h-32`}>
+      <ScrollView style={tw`h-48`}>
         {runners.map((runner, index) => (
           <View
             key={runner.id}

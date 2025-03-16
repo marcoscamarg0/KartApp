@@ -95,7 +95,6 @@ const RaceDashboard = () => {
           }
         ]);
 
-        // Calcular distância apenas se houver uma localização anterior
         if (lastLocationRef.current) {
           const distance = calculateDistance(
             lastLocationRef.current.coords.latitude,
@@ -104,13 +103,11 @@ const RaceDashboard = () => {
             newLocation.coords.longitude
           );
           
-          // Filtragem para evitar pequenas flutuações causadas por imprecisões do GPS
           if (distance > 0.001) { // Ignorar distâncias menores que 1 metro
             setTotalDistance(prevDistance => prevDistance + distance);
           }
         }
 
-        // Atualizar a localização atual e a referência à última localização
         setLocation(newLocation);
         lastLocationRef.current = newLocation;
       }
@@ -126,7 +123,7 @@ const RaceDashboard = () => {
         locationSubscription.current = null;
       }
     };
-  }, []); // Remova as dependências para evitar recriar o listener
+  }, []); 
 
   return (
     <View style={tw`flex-1 bg-black items-center justify-center p-4`}>
@@ -176,7 +173,7 @@ const RaceDashboard = () => {
         </View>
 
         {/* Ranking Section */}
-        <View style={tw`h-32`}>
+        <View style={tw`h-64`}>
           <RankingList runners={runners} />
         </View>
 
@@ -184,7 +181,7 @@ const RaceDashboard = () => {
         <View style={tw`items-center mt-2`}>
           <Image
             source={require('../assets/logo.png')}
-            style={[tw``, { width: 80, height: 80 }]} 
+            style={[tw``, { width: 40, height: 40 }]} 
             resizeMode="contain"
           />
         </View>
