@@ -132,10 +132,10 @@ const RaceDashboard = () => {
         tw`w-full bg-gray-900 rounded-lg p-4`,
         { width: width * 1, height: height * 1 }
       ]}>
-        {/* Header with back button */}
+     
         <View style={tw`flex-row justify-between items-center mb-2`}>
           <TouchableOpacity>
-            <FontAwesome name="arrow-left" size={24} color="white" />
+            <FontAwesome name="arrow-left" size={35} color="white" />
           </TouchableOpacity>
         </View>
 

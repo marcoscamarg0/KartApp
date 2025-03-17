@@ -4,21 +4,21 @@
     "slug": "KartApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon .png",
+    "icon": "./src/assets/logo.png",
     "userInterfaceStyle": "automatic",
     "scheme": "kartapp",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./src/assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#202020"
     },
     "web": {
       "bundler": "metro"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./src/assets/logo.png",
+        "backgroundColor": "#202020"
       },
       "package": "com.kartapp",
       "permissions": [
@@ -28,7 +28,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBWQ3qpenJdXC-hru78gs_leaUpaStxv3I"
+          "apiKey": "null"
         }
       },
       "googleServicesFile": "./google-services.json"
@@ -40,30 +40,12 @@
         "NSLocationAlwaysUsageDescription": "Este aplicativo precisa acessar sua localização em segundo plano."
       }
     },
-    "plugins": [
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que o KartApp use sua localização."
-        }
-      ],
-      "expo-router",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "newArchEnabled": true
-          },
-          "ios": {
-            "newArchEnabled": true
-          }
-        }
-      ]
+    "assetBundlePatterns": [
+      "**/*"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "875b4a06-39f4-4bdc-a5be-87de2a9249ca"
-      }
-    }
+    "plugins": [
+      "expo-router",
+      "@react-native-google-signin/google-signin"
+    ]
   }
 }
