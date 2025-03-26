@@ -1,14 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useClerk } from '@clerk/clerk-expo';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { signOut } = useClerk();
 
   const handleNavigateToRace = () => {
     router.push("race"); 
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (error) {
+      Alert.alert(
+        'Erro de Logout', 
+        'Não foi possível sair da conta. Tente novamente.'
+      );
+    }
   };
 
   return (
@@ -108,6 +122,11 @@ export default function HomeScreen() {
             
             <TouchableOpacity style={styles.historyButton}>
               <Text style={styles.historyButtonText}>Ver histórico de corridas</Text>
+            </TouchableOpacity>
+
+            {/* Novo botão de logout com estilo idêntico ao de histórico */}
+            <TouchableOpacity style={styles.historyButton} onPress={handleLogout}>
+              <Text style={styles.historyButtonText}>Sair da Conta</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

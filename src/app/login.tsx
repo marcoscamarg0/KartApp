@@ -169,7 +169,7 @@ export default function LoginScreen() {
             { opacity: fadeAnim }
           ]}
         >
-          <Text style={styles.footerText}>© 2023 VTR Live Sport</Text>
+          <Text style={styles.footerText}>© 2025 VTR Live Sport</Text>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>

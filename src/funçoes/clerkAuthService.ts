@@ -2,11 +2,9 @@ import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 import NetInfo from "@react-native-community/netinfo";
-import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Router } from 'expo-router';
 
-// Certifique-se que esta linha está no início do arquivo
 WebBrowser.maybeCompleteAuthSession();
 
 export interface AuthResult {
@@ -24,42 +22,59 @@ interface SignIn {
 }
 
 export class ClerkAuthService {
-  // Função para limpar tokens armazenados
+  // Constantes para chaves de armazenamento
+  private static readonly TOKEN_KEY = "clerk_session_token";
+  private static readonly SESSION_KEY = "clerk_session_id";
+
+  // Método para limpar tokens de forma segura
   private static async clearStoredTokens(): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync("clerk-js-sdk:token");
-      await SecureStore.deleteItemAsync("clerk-js-sdk:session");
+      // Verificar e remover token de sessão
+      const tokenExists = await SecureStore.getItemAsync(this.TOKEN_KEY);
+      if (tokenExists) {
+        await SecureStore.deleteItemAsync(this.TOKEN_KEY);
+      }
+
+      // Verificar e remover ID de sessão
+      const sessionExists = await SecureStore.getItemAsync(this.SESSION_KEY);
+      if (sessionExists) {
+        await SecureStore.deleteItemAsync(this.SESSION_KEY);
+      }
+
       console.log("[AuthService] Tokens limpos com sucesso");
     } catch (err) {
       console.error("[AuthService] Erro ao limpar tokens:", err);
     }
   }
 
+  // Verificar conectividade de rede
   private static async checkConnectivity(): Promise<boolean> {
     try {
       const netInfo = await NetInfo.fetch();
       return netInfo.isConnected === true;
     } catch (error) {
-      console.error("[AuthService] Connectivity check error:", error);
+      console.error("[AuthService] Erro na verificação de conectividade:", error);
       return false;
     }
   }
 
+  // Método principal de login com Google
   public static async signInWithGoogle(
     signIn: SignIn | null, 
     router: Router
   ): Promise<AuthResult> {
+    // Verificações iniciais
     if (!signIn) {
       return {
         success: false,
-        error: "SignIn is not available"
+        error: "Serviço de login não disponível"
       };
     }
 
-    // Limpar tokens anteriores para evitar problemas
+    // Limpar tokens antigos
     await this.clearStoredTokens();
 
-    // Verificação de conectividade
+    // Verificar conectividade
     const isConnected = await this.checkConnectivity();
     if (!isConnected) {
       return {
@@ -69,34 +84,30 @@ export class ClerkAuthService {
     }
 
     try {
-      console.log("[AuthService] Iniciando processo de login com Google");
+      console.log("[AuthService] Iniciando login com Google");
       
-      // Criar URL de redirecionamento
+      // Configurar URL de redirecionamento
       const redirectUrl = makeRedirectUri({
         scheme: 'exp',
         path: 'oauth-native-callback'
       });
       
-      console.log("[AuthService] URL de redirecionamento:", redirectUrl);
-
-      // Criar a sessão de login
+      // Criar sessão de login
       let signInAttempt;
       try {
         signInAttempt = await signIn.create({
           strategy: "oauth_google",
           redirectUrl: redirectUrl
         });
-        
-        console.log("[AuthService] SignIn criado, status:", signInAttempt.status);
       } catch (createError) {
-        console.error("[AuthService] Erro ao criar signIn:", createError);
+        console.error("[AuthService] Erro ao criar login:", createError);
         return {
           success: false,
           error: `Erro ao iniciar autenticação: ${String(createError)}`
         };
       }
 
-      // Se já estiver completo, retornar sucesso
+      // Verificar status da sessão
       if (signInAttempt.status === "complete") {
         return {
           success: true,
@@ -104,115 +115,72 @@ export class ClerkAuthService {
         };
       }
 
-      // Verificar se temos a URL de autenticação
+      // Processar URL de autenticação
       if (signInAttempt.status === "needs_identifier") {
         const authUrl = 
           signInAttempt.firstFactorVerification?.externalVerificationRedirectURL || 
           signInAttempt.verificationURLs?.external;
 
         if (!authUrl) {
-          console.error("[AuthService] URL de autenticação não disponível");
           return {
             success: false,
             error: "URL de autenticação não disponível"
           };
         }
 
-        console.log("[AuthService] Abrindo URL de autenticação:", authUrl.toString());
-        
-        // Implementação específica por plataforma
-        if (Platform.OS === 'ios') {
-          try {
-            // Para iOS, usar openAuthSessionAsync com opções específicas
-            const result = await WebBrowser.openAuthSessionAsync(
-              authUrl.toString(),
-              redirectUrl,
-              {
-                showInRecents: true,
-                preferEphemeralSession: false
-              }
-            );
-            
-            console.log("[AuthService] Resultado do navegador iOS:", JSON.stringify(result));
-            
-            // Esperar um pouco para dar tempo ao Clerk de processar
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Recarregar o estado do signIn
-            await signIn.reload();
-            console.log("[AuthService] Status após reload:", signIn.status);
-            
-            // Verificar se o login foi bem-sucedido
-            if (signIn.status === "complete") {
-              return {
-                success: true,
-                sessionId: signIn.createdSessionId
-              };
+        // Tratamento específico por plataforma
+        try {
+          const result = await WebBrowser.openAuthSessionAsync(
+            authUrl.toString(),
+            redirectUrl,
+            Platform.OS === 'ios' 
+              ? { 
+                  showInRecents: true, 
+                  preferEphemeralSession: false 
+                } 
+              : {}
+          );
+
+          // Aguardar processamento
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Recarregar estado do login
+          await signIn.reload();
+
+          // Verificar resultado
+          if (signIn.status === "complete") {
+            // Armazenar tokens de forma segura
+            if (signIn.createdSessionId) {
+              await SecureStore.setItemAsync(
+                this.SESSION_KEY, 
+                signIn.createdSessionId
+              );
             }
-            
-            // Mesmo se o status não for "complete", considerar sucesso se o browser retornou success
-            if (result.type === "success") {
-              return {
-                success: true,
-                sessionId: "pending-session"
-              };
-            }
-            
+
             return {
-              success: false,
-              error: `Autenticação incompleta: ${result.type}`
-            };
-          } catch (browserError) {
-            console.error("[AuthService] Erro ao abrir navegador iOS:", browserError);
-            return {
-              success: false,
-              error: `Erro ao abrir navegador: ${String(browserError)}`
+              success: true,
+              sessionId: signIn.createdSessionId
             };
           }
-        } else {
-          // Para Android
-          try {
-            const result = await WebBrowser.openAuthSessionAsync(
-              authUrl.toString(),
-              redirectUrl
-            );
-            
-            console.log("[AuthService] Resultado do navegador Android:", JSON.stringify(result));
-            
-            // Esperar um pouco para dar tempo ao Clerk de processar
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Recarregar o estado do signIn
-            await signIn.reload();
-            console.log("[AuthService] Status após reload:", signIn.status);
-            
-            // Verificar se o login foi bem-sucedido
-            if (signIn.status === "complete") {
-              return {
-                success: true,
-                sessionId: signIn.createdSessionId
-              };
-            }
-            
-            // Mesmo se o status não for "complete", considerar sucesso se o browser retornou success
-            if (result.type === "success") {
-              return {
-                success: true,
-                sessionId: "pending-session"
-              };
-            }
-            
+
+          // Tratar casos de sucesso no navegador
+          if (result.type === "success") {
             return {
-              success: false,
-              error: `Autenticação incompleta: ${result.type}`
-            };
-          } catch (browserError) {
-            console.error("[AuthService] Erro ao abrir navegador Android:", browserError);
-            return {
-              success: false,
-              error: `Erro ao abrir navegador: ${String(browserError)}`
+              success: true,
+              sessionId: "sessao_pendente"
             };
           }
+
+          return {
+            success: false,
+            error: `Autenticação incompleta: ${result.type}`
+          };
+        } catch (browserError) {
+          console.error("[AuthService] Erro no navegador:", browserError);
+          return {
+            success: false,
+            error: `Erro de autenticação: ${String(browserError)}`
+          };
         }
       }
       
