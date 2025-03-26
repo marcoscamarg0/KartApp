@@ -1,11 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StatusBar, Image, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  Dimensions, 
+  StatusBar, 
+  Image, 
+  Alert,
+  StyleSheet,
+  SafeAreaView
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import tw from 'twrnc';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router'; // Importando o useRouter
 import RankingList from '../funçoes/RankingList';
 import MapComponent from '../funçoes/MapComponent';
 import Chronometer from '../funçoes/cronometro'; 
+
 const { width, height } = Dimensions.get('window');
 
 interface Runner {
@@ -20,6 +33,7 @@ interface RouteCoordinate {
 }
 
 const RaceDashboard = () => {
+  const router = useRouter(); // Inicializando o router
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [totalDistance, setTotalDistance] = useState<number>(0);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -28,7 +42,7 @@ const RaceDashboard = () => {
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const lastLocationRef = useRef<Location.LocationObject | null>(null);
 
-  // Initialize runners with a function to update their times
+
   const [runners, setRunners] = useState<Runner[]>([
     { id: 1, name: 'CORREDOR 1', time: "" },
     { id: 2, name: 'CORREDOR 2', time: "" },
@@ -37,6 +51,36 @@ const RaceDashboard = () => {
     { id: 5, name: 'CORREDOR 5', time: "" },
     { id: 6, name: 'CORREDOR 6', time: "" },
   ]);
+
+  // Função para lidar com o botão de voltar
+  const handleGoBack = () => {
+    // Se estiver rastreando, perguntar ao usuário se deseja realmente sair
+    if (isTracking) {
+      Alert.alert(
+        "Encerrar corrida",
+        "Deseja realmente sair da corrida atual? Os dados não serão salvos.",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel"
+          },
+          { 
+            text: "Sair", 
+            onPress: () => {
+              // Limpar recursos antes de navegar
+              if (locationSubscription.current) {
+                locationSubscription.current.remove();
+              }
+              router.back(); // Navegar para a tela anterior
+            }
+          }
+        ]
+      );
+    } else {
+      // Se não estiver rastreando, simplesmente voltar
+      router.back();
+    }
+  };
 
   const updateRunnerTime = (time: string) => {
     // Update the first runner's time as an example
@@ -126,68 +170,276 @@ const RaceDashboard = () => {
   }, []); 
 
   return (
-    <View style={tw`flex-1 bg-black items-center justify-center p-4`}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <View style={[
-        tw`w-full bg-gray-900 rounded-lg p-4`,
-        { width: width * 1, height: height * 1 }
-      ]}>
-     
-        <View style={tw`flex-row justify-between items-center mb-2`}>
-          <TouchableOpacity>
-            <FontAwesome name="arrow-left" size={35} color="white" />
+      <LinearGradient
+        colors={['#1A1A1A', '#121212']}
+        style={styles.gradient}
+      >
+        <View style={styles.header}>
+          {/* Botão de voltar com o handler de clique */}
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={handleGoBack}
+            activeOpacity={0.7}
+          >
+            <FontAwesome name="arrow-left" size={22} color="white" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>CORRIDA ATUAL</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.statusIndicator}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>AO VIVO</Text>
+            </View>
+          </View>
         </View>
 
         {/* Stats Row */}
-        <View style={tw`flex-row justify-between mb-2`}>
+        <View style={styles.statsContainer}>
           {/* Current Speed */}
-          <View style={tw`bg-gray-800 p-2 rounded-lg w-[32%]`}>
-            <Text style={tw`text-orange-500 text-sm`}>VELOCIDADE</Text>
-            <Text style={tw`text-white text-xl font-bold`}>{currentSpeed} KM/H</Text>
-          </View>
+          <LinearGradient
+            colors={['#1E1E1E', '#262626']}
+            style={styles.statCard}
+          >
+            <Text style={styles.statLabel}>SPEED</Text>
+            <View style={styles.statValueContainer}>
+              <Text style={styles.statValue}>{currentSpeed}</Text>
+              <Text style={styles.statUnit}>KM/H</Text>
+            </View>
+            <View style={styles.statIconContainer}>
+              <FontAwesome name="tachometer" size={16} color="#FF6F20" />
+            </View>
+          </LinearGradient>
 
           {/* Distance */}
-          <View style={tw`bg-gray-800 p-2 rounded-lg w-[32%]`}>
-            <Text style={tw`text-orange-500 text-sm`}>DISTÂNCIA</Text>
-            <Text style={tw`text-white text-xl font-bold`}>{totalDistance.toFixed(2)} KM</Text>
-          </View>
+          <LinearGradient
+            colors={['#1E1E1E', '#262626']}
+            style={styles.statCard}
+          >
+            <Text style={styles.statLabel}>DISTANCE</Text>
+            <View style={styles.statValueContainer}>
+              <Text style={styles.statValue}>{totalDistance.toFixed(1)}</Text>
+              <Text style={styles.statUnit}>KM</Text>
+            </View>
+            <View style={styles.statIconContainer}>
+              <FontAwesome name="road" size={16} color="#FF6F20" />
+            </View>
+          </LinearGradient>
 
           {/* Current Time */}
-          <View style={tw`w-[32%]`}>
-            <Chronometer 
-              isActive={isTracking}
-              onTimeUpdate={updateRunnerTime}
-            />
-          </View>
+          <LinearGradient
+            colors={['#1E1E1E', '#262626']}
+            style={styles.statCard}
+          >
+            <Text style={styles.statLabel}>TIME</Text>
+            <View style={styles.chronometerContainer}>
+
+              <Chronometer 
+                isActive={isTracking}
+                onTimeUpdate={updateRunnerTime}
+              />
+            </View>
+            <View style={styles.statIconContainer}>
+              <FontAwesome name="clock-o" size={16} color="#FF6F20" />
+            </View>
+          </LinearGradient>
         </View>
         
         {/* Map Section */}
-        <View style={tw`flex-1 mb-2`}>
+        <View style={styles.mapContainer}>
           <MapComponent 
             location={location}
             route={route}
             isTracking={isTracking}
             speed={currentSpeed}
           />
+          <View style={styles.mapOverlay}>
+            <View style={styles.mapBadge}>
+              <FontAwesome name="map-marker" size={12} color="#FF6F20" />
+              <Text style={styles.mapBadgeText}>RASTREAMENTO ATIVO</Text>
+            </View>
+          </View>
         </View>
 
         {/* Ranking Section */}
-        <View style={tw`h-64`}>
+        <View style={styles.rankingContainer}>
+          <View style={styles.rankingHeader}>
+            <Text style={styles.rankingTitle}>CLASSIFICAÇÃO</Text>
+            <View style={styles.rankingDivider} />
+          </View>
           <RankingList runners={runners} />
         </View>
 
         {/* Logo Section */}
-        <View style={tw`items-center mt-2`}>
+        <View style={styles.footer}>
           <Image
             source={require('../assets/logo.png')}
-            style={[tw``, { width: 40, height: 40 }]} 
+            style={styles.logo} 
             resizeMode="contain"
           />
         </View>
-      </View> 
-    </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  gradient: {
+    flex: 1,
+    padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 111, 32, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 111, 32, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6F20',
+    marginRight: 6,
+  },
+  statusText: {
+    color: '#FF6F20',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  statCard: {
+    width: '31%',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'relative',
+  },
+  statLabel: {
+    color: '#FF6F20',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  statValue: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  statUnit: {
+    color: '#AAA',
+    fontSize: 12,
+  },
+  statIconContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  chronometerContainer: {
+    marginTop: 4,
+  },
+  mapContainer: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'relative',
+  },
+  mapOverlay: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  mapBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  mapBadgeText: {
+    color: '#FF6F20',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  rankingContainer: {
+    height: height * 0.25,
+    borderRadius: 16,
+    backgroundColor: 'rgba(30, 30, 30, 0.5)',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  rankingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rankingTitle: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 12,
+    alignItems:'center'
+  },
+  rankingDivider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 111, 32, 0.3)',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    opacity: 0.8,
+  },
+});
 
 export default RaceDashboard;

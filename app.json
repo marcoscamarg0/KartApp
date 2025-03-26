@@ -9,11 +9,8 @@
     "scheme": "kartapp",
     "splash": {
       "image": "./src/assets/logo.png",
-      "resizeMode": "contain",
+      "resizeMode": "contain", 
       "backgroundColor": "#202020"
-    },
-    "web": {
-      "bundler": "metro"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,31 +18,53 @@
         "backgroundColor": "#202020"
       },
       "package": "com.kartapp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "*.clerk.accounts.dev",
+              "pathPrefix": "/v1/oauth_callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
+        "ACCESS_FINE_LOCATION", 
         "ACCESS_BACKGROUND_LOCATION"
-      ],
-      "config": {
-        "googleMaps": {
-          "apiKey": "null"
-        }
-      },
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.kartapp",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Este aplicativo precisa acessar sua localização para fornecer recursos baseados em localização.",
         "NSLocationAlwaysUsageDescription": "Este aplicativo precisa acessar sua localização em segundo plano."
-      }
+      },
+      "associatedDomains": [
+        "applinks:*.clerk.accounts.dev"
+      ]
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "plugins": [
       "expo-router",
-      "@react-native-google-signin/google-signin"
-    ]
+      "expo-secure-store"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c33bf898-5955-40ee-a985-411f45cfa34b"
+      },
+      "clerk": {
+        "publishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+      }
+    }
   }
 }

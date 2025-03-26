@@ -1,32 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "jsx": "react-jsx",
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": [
-        "*"
-      ]
-    },
-    "outDir": "./dist",
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "nativewind-env.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "compilerOptions": {},
   "extends": "expo/tsconfig.base"
-
-
 }
