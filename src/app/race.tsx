@@ -10,11 +10,11 @@ import {
   StyleSheet,
   SafeAreaView
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import tw from 'twrnc';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router'; // Importando o useRouter
+import { useRouter } from 'expo-router';
 import RankingList from '../funçoes/RankingList';
 import MapComponent from '../funçoes/MapComponent';
 import Chronometer from '../funçoes/cronometro'; 
@@ -33,7 +33,7 @@ interface RouteCoordinate {
 }
 
 const RaceDashboard = () => {
-  const router = useRouter(); // Inicializando o router
+  const router = useRouter();
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [totalDistance, setTotalDistance] = useState<number>(0);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -41,7 +41,7 @@ const RaceDashboard = () => {
   const [isTracking, setIsTracking] = useState(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const lastLocationRef = useRef<Location.LocationObject | null>(null);
-
+  const [currentTime, setCurrentTime] = useState<string>("");
 
   const [runners, setRunners] = useState<Runner[]>([
     { id: 1, name: 'CORREDOR 1', time: "" },
@@ -52,9 +52,48 @@ const RaceDashboard = () => {
     { id: 6, name: 'CORREDOR 6', time: "" },
   ]);
 
+  // Função para salvar o percurso e navegar para a página de histórico
+  const saveRaceAndNavigate = () => {
+    Alert.alert(
+      "Salvar Corrida",
+      "Deseja salvar esta corrida?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        { 
+          text: "Salvar", 
+          onPress: () => {
+            // Aqui você pode implementar a lógica para salvar o percurso
+            // Por exemplo, usando AsyncStorage ou uma chamada de API
+            
+            const raceData = {
+              date: new Date().toLocaleDateString(),
+              distance: totalDistance.toFixed(1),
+              duration: currentTime,
+              avgSpeed: currentSpeed.toFixed(1),
+              route: route
+            };
+            
+            console.log("Dados da corrida salvos:", raceData);
+            
+            // Limpar a assinatura de localização antes de navegar
+            if (locationSubscription.current) {
+              locationSubscription.current.remove();
+              locationSubscription.current = null;
+            }
+            
+            // Navegar para a tela de histórico
+            router.push('/history');
+          }
+        }
+      ]
+    );
+  };
+
   // Função para lidar com o botão de voltar
   const handleGoBack = () => {
-    // Se estiver rastreando, perguntar ao usuário se deseja realmente sair
     if (isTracking) {
       Alert.alert(
         "Encerrar corrida",
@@ -67,23 +106,22 @@ const RaceDashboard = () => {
           { 
             text: "Sair", 
             onPress: () => {
-              // Limpar recursos antes de navegar
               if (locationSubscription.current) {
                 locationSubscription.current.remove();
               }
-              router.back(); // Navegar para a tela anterior
+              router.back();
             }
           }
         ]
       );
     } else {
-      // Se não estiver rastreando, simplesmente voltar
       router.back();
     }
   };
 
   const updateRunnerTime = (time: string) => {
-    // Update the first runner's time as an example
+    setCurrentTime(time);
+    // Atualizar o tempo do primeiro corredor como exemplo
     setRunners(prevRunners => {
       const newRunners = [...prevRunners];
       newRunners[0] = { ...newRunners[0], time };
@@ -158,8 +196,23 @@ const RaceDashboard = () => {
     );
   };
 
+  // Alert ao abrir a tela, perguntando se deseja iniciar a corrida
   useEffect(() => {
-    startTracking();
+    Alert.alert(
+      "Iniciar Corrida",
+      "Deseja iniciar a corrida agora?",
+      [
+        {
+          text: "Não",
+          style: "cancel",
+          onPress: () => router.back() // Voltar se o usuário não quiser iniciar
+        },
+        { 
+          text: "Sim", 
+          onPress: startTracking // Iniciar tracking se o usuário confirmar
+        }
+      ]
+    );
 
     return () => {
       if (locationSubscription.current) {
@@ -177,7 +230,6 @@ const RaceDashboard = () => {
         style={styles.gradient}
       >
         <View style={styles.header}>
-          {/* Botão de voltar com o handler de clique */}
           <TouchableOpacity 
             style={styles.backButton}
             onPress={handleGoBack}
@@ -187,10 +239,15 @@ const RaceDashboard = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>CORRIDA ATUAL</Text>
           <View style={styles.headerRight}>
-            <View style={styles.statusIndicator}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>AO VIVO</Text>
-            </View>
+            {/* Botão modificado para salvar corrida */}
+            <TouchableOpacity 
+              style={styles.statusIndicator}
+              onPress={saveRaceAndNavigate}
+              activeOpacity={0.7}
+            >
+              <FontAwesome name="save" size={14} color="#FF6F20" style={{marginRight: 6}} />
+              <Text style={styles.statusText}>SALVAR</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -233,7 +290,6 @@ const RaceDashboard = () => {
           >
             <Text style={styles.statLabel}>TIME</Text>
             <View style={styles.chronometerContainer}>
-
               <Chronometer 
                 isActive={isTracking}
                 onTimeUpdate={updateRunnerTime}
@@ -245,7 +301,6 @@ const RaceDashboard = () => {
           </LinearGradient>
         </View>
         
-        {/* Map Section */}
         <View style={styles.mapContainer}>
           <MapComponent 
             location={location}
@@ -255,13 +310,12 @@ const RaceDashboard = () => {
           />
           <View style={styles.mapOverlay}>
             <View style={styles.mapBadge}>
-              <FontAwesome name="map-marker" size={12} color="#FF6F20" />
+              <FontAwesome5 name="car-side" size={12} color="#FF6F20" />
               <Text style={styles.mapBadgeText}>RASTREAMENTO ATIVO</Text>
             </View>
           </View>
         </View>
 
-        {/* Ranking Section */}
         <View style={styles.rankingContainer}>
           <View style={styles.rankingHeader}>
             <Text style={styles.rankingTitle}>CLASSIFICAÇÃO</Text>
@@ -270,7 +324,6 @@ const RaceDashboard = () => {
           <RankingList runners={runners} />
         </View>
 
-        {/* Logo Section */}
         <View style={styles.footer}>
           <Image
             source={require('../assets/logo.png')}

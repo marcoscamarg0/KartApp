@@ -9,17 +9,42 @@ export default function HomeScreen() {
   const router = useRouter();
   const { signOut } = useClerk();
 
+  // TODO: Implementar busca de dados do usuário
+  // GET /api/users/me
+  // Response deve incluir:
+  // - Dados do perfil
+  // - Estatísticas gerais (total_races, victories, points)
+  // - Configurações do usuário
+
+  // TODO: Implementar busca de próxima corrida
+  // GET /api/races/next
+  // Response deve incluir:
+  // - Status da corrida (available, scheduled, full)
+  // - Detalhes da pista
+  // - Horário previsto
+  // - Número de participantes
+
   const handleNavigateToRace = () => {
-    router.push("race"); 
+    // TODO: Implementar criação de nova corrida
+    // POST /api/races
+    // Request body deve incluir:
+    // - userId
+    // - trackId
+    // - timestamp
+    router.push("race");
   };
 
   const handleLogout = async () => {
     try {
+      // TODO: Implementar logout no backend
+      // POST /api/auth/logout
+      // - Invalidar tokens
+      // - Limpar sessão
       await signOut();
       router.replace('/login');
     } catch (error) {
       Alert.alert(
-        'Erro de Logout', 
+        'Erro de Logout',
         'Não foi possível sair da conta. Tente novamente.'
       );
     }
@@ -34,10 +59,10 @@ export default function HomeScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
-            <Image 
-              source={require('../assets/logo.png')} 
-              style={styles.logo} 
-              resizeMode="contain" 
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
             <View style={styles.headerPattern}>
               {Array(5).fill(0).map((_, i) => (
@@ -53,7 +78,7 @@ export default function HomeScreen() {
               <View style={styles.divider} />
               <Text style={styles.welcomeSubtitle}>Pronto para a próxima corrida?</Text>
             </View>
-            
+
             <View style={styles.statsContainer}>
               <View style={styles.statCard}>
                 <View style={styles.statIconContainer}>
@@ -104,8 +129,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.footer}>
-            <TouchableOpacity 
-              style={styles.raceButton} 
+            <TouchableOpacity
+              style={styles.raceButton}
               onPress={handleNavigateToRace}
               activeOpacity={0.8}
             >
@@ -119,12 +144,15 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-forward" size={24} color="#FFF" />
               </LinearGradient>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.historyButton}>
+
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => router.push('history')}
+            >
               <Text style={styles.historyButtonText}>Ver histórico de corridas</Text>
             </TouchableOpacity>
 
-            {/* Novo botão de logout com estilo idêntico ao de histórico */}
+            
             <TouchableOpacity style={styles.historyButton} onPress={handleLogout}>
               <Text style={styles.historyButtonText}>Sair da Conta</Text>
             </TouchableOpacity>

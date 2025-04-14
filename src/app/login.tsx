@@ -23,6 +23,26 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { width, height } = Dimensions.get("window");
 
+// Interface para resposta de autenticação do backend
+interface AuthResponse {
+  success: boolean;
+  token?: string;
+  error?: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    picture?: string;
+  };
+}
+
+// Interface para tokens
+interface TokenData {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -63,6 +83,15 @@ export default function LoginScreen() {
     };
   }, []);
 
+  /**
+   * Gerencia o processo de autenticação com Google
+   * Flow de autenticação:
+   * 1. usuário clica no botão de login
+   * 2. clerk inicia o fluxo OAuth
+   * 3. backend valida o token do Google
+   * 4. backend cria/atualiza usuário no banco
+   * 5. backend retorna tokens de acesso
+   */
   const handleGoogleSignIn = async () => {
     if (!signIn) {
       Alert.alert("Erro", "Serviço de login não disponível");
@@ -80,15 +109,39 @@ export default function LoginScreen() {
     WebBrowser.dismissBrowser();
 
     try {
-      // Corrigindo a chamada para o ClerkAuthService
+      // TODO: Backend Endpoints Necessários:
+      // POST /api/auth/google
+      // Body: { googleToken: string }
+      // Response: AuthResponse
+      
+      // POST /api/auth/refresh
+      // Body: { refreshToken: string }
+      // Response: TokenData
+      
+      // GET /api/users/me
+      // Headers: { Authorization: `Bearer ${accessToken}` }
+      // Response: UserProfile
+
       const result = await ClerkAuthService.signInWithGoogle(signIn, router);
+      
       if (result.success) {
-        setLoadingMessage("Autenticação bem-sucedida!");
-        setTimeout(() => {
-          router.replace("/home");
-        }, 1000);
+        // TODO: Backend deve:
+        // 1. validar token do Google
+        // 2. criar/atualizar usuário no banco
+        // 3. gerar JWT tokens
+        // 4. salvar refresh token
+        // 5. retornar dados do usuário
+        
+        router.replace("/home");
       } else {
         setAuthFailed(true);
+        // TODO: Implementar log de erros no backend
+        // POST /api/logs/auth
+        // Body: { 
+        //   error: string,
+        //   userId?: string,
+        //   timestamp: Date
+        // }
         Alert.alert("Erro de Login", result.error || "Erro desconhecido");
       }
     } catch (error) {
