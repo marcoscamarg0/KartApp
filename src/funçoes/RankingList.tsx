@@ -1,37 +1,57 @@
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { Runner } from '../funçoes/RaceDataService';
 import tw from 'twrnc';
-
-interface Runner {
-  id: number;
-  name: string;
-  time: string;
-}
 
 interface RankingListProps {
   runners: Runner[];
+  currentUserId: string;
 }
 
-const RankingList: React.FC<RankingListProps> = ({ runners }) => {
+const RankingList: React.FC<RankingListProps> = ({ runners, currentUserId }) => {
+  // Ordenar os corredores por volta e distância
+  const sortedRunners = [...runners].sort((a, b) => {
+    if (a.lap !== b.lap) return b.lap - a.lap;
+    return b.distance - a.distance;
+  });
+
+  // Renderizar cada item da lista
+  const renderItem = ({ item, index }: { item: Runner; index: number }) => {
+    const isCurrentUser = item.id === currentUserId;
+    
+    return (
+      <View 
+        style={[
+          tw`flex-row justify-between items-center py-2 px-1`,
+          isCurrentUser ? tw`bg-gray-700 rounded-lg` : null
+        ]}
+      >
+        <View style={tw`flex-row items-center`}>
+          <Text style={tw`text-white text-lg font-bold w-8`}>{index + 1}</Text>
+          <Text style={tw`text-white text-lg ${isCurrentUser ? 'font-bold' : ''}`}>
+            {item.name}
+          </Text>
+        </View>
+        
+        <View style={tw`flex-row`}>
+          <Text style={tw`text-white text-lg mr-4`}>
+            Volta {item.lap}
+          </Text>
+          <Text style={tw`text-white text-lg`}>
+            {item.time}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
-    <View style={tw`bg-gray p-4 rounded-lg mb-4`}>
-      <ScrollView style={tw`h-`}>
-        {runners.map((runner, index) => (
-          <View
-            key={runner.id}
-            style={tw`flex-row justify-between items-center py-2 border-b border-gray-700`}
-          >
-            <View style={tw`flex-row items-center`}>
-              <Text style={tw`text-white text-lg mr-5`}>{index + 1}º</Text>
-              <Text style={tw`text-white text-lg`}>{runner.name}</Text>
-            </View>
-            <Text style={tw`text-white text-lg`}>
-              {runner.time || '--:--'}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+    <FlatList
+      data={sortedRunners}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={tw`py-2`}
+    />
   );
 };
 

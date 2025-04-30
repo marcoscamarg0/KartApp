@@ -1,7 +1,8 @@
 import React from 'react';
-import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { View, StyleSheet } from 'react-native';
-import * as Location from 'expo-location';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { Runner } from '../funçoes/RaceDataService';
+import tw from 'twrnc';
 
 interface RouteCoordinate {
   latitude: number;
@@ -9,67 +10,71 @@ interface RouteCoordinate {
 }
 
 interface MapComponentProps {
-  location: Location.LocationObject | null;
+  location: any;
   route: RouteCoordinate[];
-  isTracking: boolean;
-  speed: number;}
+  runners: Runner[];
+  currentUserId: string;
+}
 
-const MapComponent: React.FC<MapComponentProps> = ({ location, route, isTracking, speed }) => {
-  const initialRegion = {
-    latitude: location?.coords.latitude ?? -23.550520,
-    longitude: location?.coords.longitude ?? -46.633308,
+const MapComponent: React.FC<MapComponentProps> = ({ location, route, runners, currentUserId }) => {
+  // Encontrar o corredor atual para centralizar o mapa
+  const currentRunner = runners.find(r => r.id === currentUserId);
+  
+  // Definir a região inicial do mapa
+  const initialRegion = currentRunner?.location ? {
+    latitude: currentRunner.location.latitude,
+    longitude: currentRunner.location.longitude,
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
+  } : {
+    latitude: -23.550520,  // Coordenadas padrão (São Paulo)
+    longitude: -46.633308,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   };
 
   return (
-    <View style={styles.container}>
+    <View style={tw`flex-1`}>
       <MapView
-        style={styles.map}
-        provider={PROVIDER_DEFAULT}
+        provider={PROVIDER_GOOGLE}
+        style={tw`flex-1`}
         initialRegion={initialRegion}
-        region={location ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+        region={currentRunner?.location ? {
+          latitude: currentRunner.location.latitude,
+          longitude: currentRunner.location.longitude,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         } : undefined}
-        mapType="standard"
-        rotateEnabled={false}
-        zoomEnabled={true}
-        scrollEnabled={true}
       >
-        {location && (
-          <Marker
-            coordinate={{
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }}
-            title={`Velocidade: ${speed.toFixed(1)} KM/H`}
-          />
-        )}
-        
+        {/* Traçado da rota */}
         {route.length > 0 && (
           <Polyline
             coordinates={route}
-            strokeColor="#FF4500"
+            strokeColor="#FF6F20"
             strokeWidth={3}
           />
         )}
+        
+        {/* Marcadores para cada corredor */}
+        {runners.map((runner) => {
+          if (!runner.location) return null;
+          
+          return (
+            <Marker
+              key={runner.id}
+              coordinate={{
+                latitude: runner.location.latitude,
+                longitude: runner.location.longitude,
+              }}
+              title={runner.name}
+              description={`Velocidade: ${runner.speed} km/h`}
+              pinColor={runner.id === currentUserId ? '#FF6F20' : '#1E90FF'}
+            />
+          );
+        })}
       </MapView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  map: {
-    flex: 1,
-  },
-});
 
 export default MapComponent;

@@ -1,77 +1,119 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, StatusBar } from 'react-native';
+
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StatusBar, 
+  FlatList, 
+  Alert 
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { FontAwesome5 } from '@expo/vector-icons'; 
+import HistoryService, { RaceHistoryEntry } from '../funçoes/HistoryService';
 
-// back-end
-interface Race {
-  id: string;        // ID único da corrida no banco de dados
-  date: string;      // data formatada (considerar enviar ISO date do backend)
-  distance: string;  // distância total percorrida (em km)
-  duration: string;  // duração total (formato HH:mm:ss)
-  avgSpeed: string;  // velocidade média (km/h)
-}
-
-const HistoryScreen = () => {
+export default function HistoryScreen() {
   const router = useRouter();
-
-  // substituir este array estático por uma chamada à API
-  // considerar paginação com query params: ?page=1&limit=10
-  const races: Race[] = [
-    { id: '1', date: '15/04/2024', distance: '5.2 km', duration: '28:15', avgSpeed: '11.1 km/h' },
-    { id: '2', date: '12/04/2024', distance: '3.8 km', duration: '21:40', avgSpeed: '10.5 km/h' },
-    { id: '3', date: '08/04/2024', distance: '7.5 km', duration: '42:30', avgSpeed: '10.6 km/h' },
-  ];
-
-  // Handler para navegação ao detalhe da corrida
-  // O ID será usado para buscar dados detalhados no backend
-  const handleViewRace = (raceId: string) => {
-    // TODO: Considerar pré-carregar dados via API
-    // Endpoint sugerido: GET /api/races/{raceId}
-    router.push(`/race-detail?id=${raceId}`);
+  const [history, setHistory] = useState<RaceHistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const historyService = HistoryService.getInstance();
+  
+  // Carregar o histórico de corridas
+  useEffect(() => {
+    const loadHistory = async () => {
+      setLoading(true);
+      const raceHistory = await historyService.getRaceHistory();
+      setHistory(raceHistory);
+      setLoading(false);
+    };
+    
+    loadHistory();
+  }, []);
+  
+  // Limpar o histórico
+  const handleClearHistory = () => {
+    Alert.alert(
+      'Limpar Histórico',
+      'Tem certeza que deseja limpar todo o histórico de corridas? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Limpar', 
+          style: 'destructive',
+          onPress: async () => {
+            const success = await historyService.clearHistory();
+            if (success) {
+              setHistory([]);
+            } else {
+              Alert.alert('Erro', 'Não foi possível limpar o histórico.');
+            }
+          }
+        }
+      ]
+    );
   };
-
-  // Renderiza cada item da lista de corridas
-  // Os dados devem vir formatados do backend para exibição
-  const renderRaceItem = ({ item }: { item: Race }) => (
-    <TouchableOpacity 
-      style={styles.raceItem} 
-      onPress={() => handleViewRace(item.id)}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={['#222222', '#1A1A1A']}
-        style={styles.raceItemGradient}
+  
+  // Renderizar um item do histórico
+  const renderHistoryItem = ({ item }: { item: RaceHistoryEntry }) => {
+    const formattedDate = new Date(item.date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    
+    return (
+      <TouchableOpacity 
+        style={styles.historyItem}
+        onPress={() => router.push({
+          pathname: '/race-details',
+          params: { raceId: item.id }
+        })}
       >
-        <View style={styles.raceItemHeader}>
-          <Text style={styles.raceDate}>{item.date}</Text>
-          <Ionicons name="chevron-forward" size={20} color="#FF6F20" />
+        <View style={styles.historyItemHeader}>
+          <Text style={styles.historyItemTitle}>{item.circuitName}</Text>
+          <Text style={styles.historyItemDate}>{formattedDate}</Text>
         </View>
-        <View style={styles.raceStats}>
-          <View style={styles.statItem}>
         
-            <FontAwesome5 name="car" size={16} color="#FF6F20" />
-            <Text style={styles.statText}>{item.distance}</Text>
-          </View>
+        <View style={styles.historyItemStats}>
           <View style={styles.statItem}>
-            <Ionicons name="time" size={16} color="#FF6F20" />
-            <Text style={styles.statText}>{item.duration}</Text>
+            <Ionicons name="time-outline" size={16} color="#AAA" />
+            <Text style={styles.statValue}>{item.duration}</Text>
           </View>
+          
           <View style={styles.statItem}>
-            <Ionicons name="speedometer" size={16} color="#FF6F20" />
-            <Text style={styles.statText}>{item.avgSpeed}</Text>
+            <Ionicons name="speedometer-outline" size={16} color="#AAA" />
+            <Text style={styles.statValue}>{item.maxSpeed} km/h</Text>
+          </View>
+          
+          <View style={styles.statItem}>
+            <Ionicons name="map-outline" size={16} color="#AAA" />
+            <Text style={styles.statValue}>{(item.distance / 1000).toFixed(2)} km</Text>
+          </View>
+          
+          <View style={styles.statItem}>
+            <Ionicons name="flag-outline" size={16} color="#AAA" />
+            <Text style={styles.statValue}>{item.laps} voltas</Text>
           </View>
         </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-
-
-  // paginação infinita (carregar mais corridas ao rolar)
-  // Pull to refresh para atualizar lista
-  // Tratamento de estados de loading e erro
+        
+        <View style={styles.historyItemFooter}>
+          <View style={styles.positionBadge}>
+            <Text style={styles.positionText}>
+              {item.position}º de {item.totalParticipants}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#AAA" />
+        </View>
+      </TouchableOpacity>
+    );
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -79,115 +121,153 @@ const HistoryScreen = () => {
         colors={['#1A1A1A', '#121212']}
         style={styles.background}
       >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>HISTÓRICO DE CORRIDAS</Text>
-          <View style={styles.headerRight} />
-        </View>
 
-        <FlatList
-          data={races}
-          renderItem={renderRaceItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+<View style={styles.header}>
+<TouchableOpacity 
+  style={styles.backButton}
+  onPress={() => router.back()}
+>
+  <Ionicons name="arrow-back" size={24} color="#FFF" />
+</TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Image
-            source={require('../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-      </LinearGradient>
-    </SafeAreaView>
-  );
-};
+<Text style={styles.headerTitle}>Histórico de Corridas</Text>
+
+<TouchableOpacity 
+  style={styles.clearButton}
+  onPress={handleClearHistory}
+>
+  <Ionicons name="trash-outline" size={22} color="#FF6F20" />
+</TouchableOpacity>
+</View>
+
+{/* Lista de corridas */}
+<FlatList
+data={history}
+renderItem={renderHistoryItem}
+keyExtractor={(item) => item.id}
+contentContainerStyle={styles.listContent}
+ListEmptyComponent={
+  <View style={styles.emptyContainer}>
+    <Ionicons name="flag-outline" size={60} color="#333" />
+    <Text style={styles.emptyTitle}>
+      Nenhuma corrida encontrada
+    </Text>
+    <Text style={styles.emptySubtitle}>
+      Suas corridas concluídas aparecerão aqui.
+    </Text>
+  </View>
+}
+/>
+</LinearGradient>
+</SafeAreaView>
+);
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
-  background: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  headerRight: {
-    width: 40,
-  },
-  listContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  raceItem: {
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  raceItemGradient: {
-    padding: 16,
-  },
-  raceItemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  raceDate: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  raceStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    color: '#DDD',
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  logo: {
-    width: 80,
-    height: 40,
-    opacity: 0.8,
-  },
+container: {
+flex: 1,
+backgroundColor: '#121212',
+},
+background: {
+flex: 1,
+},
+header: {
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'space-between',
+paddingHorizontal: 16,
+paddingVertical: 12,
+borderBottomWidth: 1,
+borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+},
+backButton: {
+padding: 8,
+},
+headerTitle: {
+color: '#FFF',
+fontSize: 18,
+fontWeight: 'bold',
+},
+clearButton: {
+padding: 8,
+},
+listContent: {
+padding: 16,
+paddingBottom: 32,
+},
+historyItem: {
+backgroundColor: 'rgba(255, 255, 255, 0.05)',
+borderRadius: 12,
+padding: 16,
+marginBottom: 16,
+borderWidth: 1,
+borderColor: 'rgba(255, 255, 255, 0.1)',
+},
+historyItemHeader: {
+flexDirection: 'row',
+justifyContent: 'space-between',
+marginBottom: 12,
+},
+historyItemTitle: {
+color: '#FFF',
+fontSize: 16,
+fontWeight: 'bold',
+},
+historyItemDate: {
+color: '#AAA',
+fontSize: 12,
+},
+historyItemStats: {
+flexDirection: 'row',
+flexWrap: 'wrap',
+marginBottom: 12,
+},
+statItem: {
+flexDirection: 'row',
+alignItems: 'center',
+width: '50%',
+marginBottom: 8,
+},
+statValue: {
+color: '#DDD',
+fontSize: 14,
+marginLeft: 6,
+},
+historyItemFooter: {
+flexDirection: 'row',
+justifyContent: 'space-between',
+alignItems: 'center',
+paddingTop: 8,
+borderTopWidth: 1,
+borderTopColor: 'rgba(255, 255, 255, 0.05)',
+},
+positionBadge: {
+backgroundColor: 'rgba(255, 111, 32, 0.15)',
+paddingVertical: 4,
+paddingHorizontal: 8,
+borderRadius: 4,
+},
+positionText: {
+color: '#FF6F20',
+fontSize: 12,
+fontWeight: 'bold',
+},
+emptyContainer: {
+alignItems: 'center',
+justifyContent: 'center',
+paddingVertical: 60,
+},
+emptyTitle: {
+color: '#FFF',
+fontSize: 18,
+fontWeight: 'bold',
+marginTop: 16,
+marginBottom: 8,
+},
+emptySubtitle: {
+color: '#AAA',
+fontSize: 14,
+textAlign: 'center',
+paddingHorizontal: 40,
+},
 });
-
-export default HistoryScreen;

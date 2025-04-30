@@ -1,45 +1,54 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  SafeAreaView, 
+  StatusBar, 
+  ScrollView, 
+  Alert,
+  Modal
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useClerk } from '@clerk/clerk-expo';
+import QRCodeScanner from '../funçoes/QRCodeScanner';
 
-export default function HomeScreen() {
+export default function home () {
   const router = useRouter();
   const { signOut } = useClerk();
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
-  // TODO: Implementar busca de dados do usuário
-  // GET /api/users/me
-  // Response deve incluir:
-  // - Dados do perfil
-  // - Estatísticas gerais (total_races, victories, points)
-  // - Configurações do usuário
-
-  // TODO: Implementar busca de próxima corrida
-  // GET /api/races/next
-  // Response deve incluir:
-  // - Status da corrida (available, scheduled, full)
-  // - Detalhes da pista
-  // - Horário previsto
-  // - Número de participantes
-
+  // Função para iniciar uma nova corrida
   const handleNavigateToRace = () => {
-    // TODO: Implementar criação de nova corrida
-    // POST /api/races
-    // Request body deve incluir:
-    // - userId
-    // - trackId
-    // - timestamp
     router.push("race");
   };
 
+  // Função para escanear QR code e entrar em uma corrida existente
+  const handleScanQRCode = () => {
+    setShowQRScanner(true);
+  };
+
+  // Função para processar o QR code escaneado
+  const handleQRCodeScanned = (data: { circuitId: string; userId: string }) => {
+    setShowQRScanner(false);
+    
+    // Navegar para a tela de corrida com o ID do circuito
+    router.push({
+      pathname: '/race',
+      params: {
+        mode: 'join',
+        circuitId: data.circuitId
+      }
+    });
+  };
+
+  // Função para fazer logout
   const handleLogout = async () => {
     try {
-      // TODO: Implementar logout no backend
-      // POST /api/auth/logout
-      // - Invalidar tokens
-      // - Limpar sessão
       await signOut();
       router.replace('/login');
     } catch (error) {
@@ -58,11 +67,12 @@ export default function HomeScreen() {
         style={styles.background}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Cabeçalho */}
           <View style={styles.header}>
-            <Image
-              source={require('../assets/logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
+            <Image 
+              source={require('../assets/logo.png')} 
+              style={styles.logo} 
+              resizeMode="contain" 
             />
             <View style={styles.headerPattern}>
               {Array(5).fill(0).map((_, i) => (
@@ -71,7 +81,9 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Conteúdo principal */}
           <View style={styles.content}>
+            {/* Seção de boas-vindas */}
             <View style={styles.welcomeContainer}>
               <Text style={styles.welcomeTitle}>Bem-vindo,</Text>
               <Text style={styles.welcomeName}>Piloto!</Text>
@@ -79,6 +91,7 @@ export default function HomeScreen() {
               <Text style={styles.welcomeSubtitle}>Pronto para a próxima corrida?</Text>
             </View>
 
+            {/* Estatísticas */}
             <View style={styles.statsContainer}>
               <View style={styles.statCard}>
                 <View style={styles.statIconContainer}>
@@ -87,6 +100,7 @@ export default function HomeScreen() {
                 <Text style={styles.statValue}>0</Text>
                 <Text style={styles.statLabel}>Corridas</Text>
               </View>
+              
               <View style={styles.statCard}>
                 <View style={styles.statIconContainer}>
                   <Ionicons name="trophy" size={20} color="#FF6F20" />
@@ -94,6 +108,7 @@ export default function HomeScreen() {
                 <Text style={styles.statValue}>0</Text>
                 <Text style={styles.statLabel}>Vitórias</Text>
               </View>
+              
               <View style={styles.statCard}>
                 <View style={styles.statIconContainer}>
                   <Ionicons name="star" size={20} color="#FF6F20" />
@@ -103,9 +118,10 @@ export default function HomeScreen() {
               </View>
             </View>
 
+            {/* Informações da próxima corrida */}
             <View style={styles.raceInfoContainer}>
-              <LinearGradient
-                colors={['#222222', '#1A1A1A']}
+              <LinearGradient 
+                colors={['#222222', '#1A1A1A']} 
                 style={styles.raceInfoCard}
               >
                 <View style={styles.raceInfoHeader}>
@@ -114,11 +130,13 @@ export default function HomeScreen() {
                     <Text style={styles.raceStatusText}>DISPONÍVEL</Text>
                   </View>
                 </View>
+                
                 <View style={styles.raceInfoContent}>
                   <View style={styles.raceInfoItem}>
                     <Ionicons name="location" size={16} color="#AAA" />
                     <Text style={styles.raceInfoText}>Pista Principal</Text>
                   </View>
+                  
                   <View style={styles.raceInfoItem}>
                     <Ionicons name="time" size={16} color="#AAA" />
                     <Text style={styles.raceInfoText}>Duração: 10 min</Text>
@@ -128,16 +146,18 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Rodapé com botões */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.raceButton}
+            {/* Botão para iniciar corrida */}
+            <TouchableOpacity 
+              style={styles.raceButton} 
               onPress={handleNavigateToRace}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={['#FF8F50', '#FF6F20', '#E85D10']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <LinearGradient 
+                colors={['#FF8F50', '#FF6F20', '#E85D10']} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 0 }} 
                 style={styles.buttonGradient}
               >
                 <Text style={styles.buttonText}>INICIAR CORRIDA</Text>
@@ -145,19 +165,58 @@ export default function HomeScreen() {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.historyButton}
+            {/* Botão para entrar em corrida via QR code */}
+            <TouchableOpacity 
+              style={styles.qrCodeButton} 
+              onPress={handleScanQRCode}
+              activeOpacity={0.8}
+            >
+              <LinearGradient 
+                colors={['#333333', '#222222']} 
+                start={{ x: 0, y: 0 }} 
+                end={{ x: 1, y: 0 }} 
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.qrButtonText}>ENTRAR COM QR CODE</Text>
+                <FontAwesome name="qrcode" size={20} color="#FF6F20" />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            {/* Botão para ver histórico */}
+            <TouchableOpacity 
+              style={styles.historyButton} 
               onPress={() => router.push('history')}
             >
               <Text style={styles.historyButtonText}>Ver histórico de corridas</Text>
             </TouchableOpacity>
-
             
-            <TouchableOpacity style={styles.historyButton} onPress={handleLogout}>
+            {/* Botão de logout */}
+            <TouchableOpacity 
+              style={styles.historyButton} 
+              onPress={handleLogout}
+            >
               <Text style={styles.historyButtonText}>Sair da Conta</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Modal do Scanner de QR Code */}
+        <Modal
+          visible={showQRScanner}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowQRScanner(false)}
+        >
+          <View style={styles.modalContainer}>
+            <QRCodeScanner onCodeScanned={handleQRCodeScanned} />
+            <TouchableOpacity 
+              onPress={() => setShowQRScanner(false)}
+              style={styles.closeButton}
+            >
+              <FontAwesome name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -317,6 +376,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     marginBottom: 16,
   },
+  qrCodeButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    marginBottom: 16,
+  },
   buttonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -331,6 +400,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
     letterSpacing: 1,
   },
+  qrButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
   historyButton: {
     alignItems: 'center',
     paddingVertical: 12,
@@ -339,5 +414,20 @@ const styles = StyleSheet.create({
     color: '#AAA',
     fontSize: 14,
     textDecorationLine: 'underline',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(255, 111, 32, 0.3)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

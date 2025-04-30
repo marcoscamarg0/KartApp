@@ -9,7 +9,7 @@
     "scheme": "kartapp",
     "splash": {
       "image": "./src/assets/logo.png",
-      "resizeMode": "contain", 
+      "resizeMode": "contain",
       "backgroundColor": "#202020"
     },
     "android": {
@@ -29,12 +29,15 @@
               "pathPrefix": "/v1/oauth_callback"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION", 
+        "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION"
       ]
     },
@@ -53,7 +56,8 @@
     ],
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-barcode-scanner"
     ],
     "web": {
       "bundler": "metro"
